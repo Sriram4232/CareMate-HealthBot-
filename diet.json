@@ -1,0 +1,114 @@
+{
+  "chatbot_name": "NutriGuide",
+  "purpose": "To provide general diet suggestions and nutritional advice. Always recommends consulting a healthcare professional for personalized plans.",
+  "disclaimer": "This advice is for informational purposes only and is not a substitute for professional medical advice.",
+  "user_goals": {
+    "weight_loss": {
+      "description": "Focus on a calorie deficit, high protein, and fiber to promote satiety.",
+      "key_principles": [
+        "Aim for a gradual calorie deficit of 300-500 calories per day.",
+        "Prioritize lean protein sources to feel full and preserve muscle mass.",
+        "Fill half your plate with non-starchy vegetables.",
+        "Choose whole grains over refined carbohydrates.",
+        "Stay hydrated; sometimes thirst is mistaken for hunger."
+      ],
+      "foods_to_prioritize": ["chicken_breast", "fish", "tofu", "lentils", "leafy_greens", "broccoli", "berries", "quinoa", "water"],
+      "foods_to_limit": ["sugary_drinks", "processed_snacks", "white_bread", "fried_foods", "high-sugar_desserts"]
+    },
+    "muscle_gain": {
+      "description": "Focus on a calorie surplus with sufficient protein for muscle repair and growth.",
+      "key_principles": [
+        "Consume more calories than you burn, focusing on nutrient-dense foods.",
+        "Aim for 1.6-2.2 grams of protein per kilogram of body weight.",
+        "Include carbohydrates to fuel your workouts.",
+        "Don't neglect healthy fats for hormone production.",
+        "Time your meals: a protein-rich meal/snack after a workout is beneficial."
+      ],
+      "foods_to_prioritize": ["salmon", "eggs", "greek_yogurt", "lean_red_meat", "chickpeas", "sweet_potato", "brown_rice", "avocado", "nuts"],
+      "foods_to_limit": ["excessive_alcohol", "empty_calorie_foods"] 
+    },
+    "maintain_weight": {
+      "description": "Focus on a balanced diet and consistent, healthy eating habits.",
+      "key_principles": [
+        "Eat a variety of foods from all food groups.",
+        "Listen to your body's hunger and fullness cues.",
+        "Maintain a consistent level of physical activity.",
+        "Focus on food quality rather than just quantity."
+      ],
+      "foods_to_prioritize": ["variety_of_fruits", "variety_of_vegetables", "whole_grains", "lean_proteins", "healthy_fats"],
+      "foods_to_limit": ["processed_foods", "added_sugars"] 
+    },
+    "improve_energy": {
+      "description": "Focus on stable blood sugar levels and key nutrients involved in energy production.",
+      "key_principles": [
+        "Eat regular, balanced meals to avoid energy crashes.",
+        "Choose complex carbs (oats, whole grains) over simple sugars.",
+        "Include iron-rich foods (spinach, legumes, red meat).",
+        "Stay hydrated! Dehydration is a common cause of fatigue.",
+        "Limit caffeine, especially in the afternoon."
+      ],
+      "foods_to_prioritize": ["oats", "bananas", "nuts", "spinach", "beans", "fatty_fish", "water"],
+      "foods_to_limit": ["sugary_cereals", "candy", "energy_drinks"] 
+    }
+  },
+  "food_database": {
+    "proteins": [
+      { "name": "chicken_breast", "description": "Lean, versatile source of protein." },
+      { "name": "salmon", "description": "Rich in protein and omega-3 fatty acids." },
+      { "name": "eggs", "description": "High-quality protein and essential nutrients." },
+      { "name": "greek_yogurt", "description": "High in protein and probiotics." },
+      { "name": "tofu", "description": "Plant-based protein made from soybeans." },
+      { "name": "lentils", "description": "Excellent source of plant-based protein and fiber." },
+      { "name": "chickpeas", "description": "Good source of protein and fiber." }
+    ],
+    "carbohydrates": [
+      { "name": "quinoa", "description": "Complete protein and a good source of complex carbs." },
+      { "name": "brown_rice", "description": "Whole grain, provides sustained energy." },
+      { "name": "sweet_potato", "description": "Rich in complex carbs, fiber, and Vitamin A." },
+      { "name": "oats", "description": "Great source of soluble fiber for sustained energy." },
+      { "name": "berries", "description": "Low-sugar fruit, high in antioxidants and fiber." },
+      { "name": "bananas", "description": "Good source of quick energy and potassium." }
+    ],
+    "fats": [
+      { "name": "avocado", "description": "Source of healthy monounsaturated fats." },
+      { "name": "nuts", "description": "Provide healthy fats, protein, and fiber." },
+      { "name": "olive_oil", "description": "Heart-healthy fat, great for cooking and dressings." },
+      { "name": "fatty_fish", "description": "Like salmon and mackerel, rich in omega-3s." }
+    ],
+    "vegetables": [
+      { "name": "leafy_greens", "description": "e.g., Spinach, Kale. Low in calories, high in nutrients." },
+      { "name": "broccoli", "description": "High in fiber, Vitamin C, and various antioxidants." },
+      { "name": "spinach", "description": "Packed with iron, vitamins, and antioxidants." }
+    ]
+  },
+  "general_nutrition_principles": [
+    "Hydrate: Drink plenty of water throughout the day.",
+    "Balance: Aim for a balanced plate with protein, carbs, and fats at each meal.",
+    "Variety: Eat a wide range of colorful fruits and vegetables to get different nutrients.",
+    "Whole Foods: Prioritize whole, unprocessed foods over packaged ones.",
+    "Mindful Eating: Pay attention to what you eat and avoid distractions like TV during meals."
+  ],
+  "sample_meal_ideas": {
+    "breakfast": [
+      "Scrambled eggs with spinach and whole-wheat toast.",
+      "Greek yogurt with berries and a handful of nuts.",
+      "Oatmeal made with milk or water, topped with banana and a spoon of nut butter."
+    ],
+    "lunch": [
+      "Large salad with grilled chicken, mixed vegetables, and a vinaigrette dressing.",
+      "Quinoa bowl with black beans, corn, salsa, and avocado.",
+      "Whole-wheat wrap with turkey, hummus, and lots of veggies."
+    ],
+    "dinner": [
+      "Baked salmon with a side of roasted broccoli and quinoa.",
+      "Stir-fried tofu with mixed vegetables and brown rice.",
+      "Lean ground turkey chili with beans and a side salad."
+    ],
+    "snacks": [
+      "Apple slices with almond butter.",
+      "Carrot and cucumber sticks with hummus.",
+      "A small handful of mixed nuts.",
+      "A hard-boiled egg."
+    ]
+  }
+}
