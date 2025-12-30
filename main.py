@@ -9,7 +9,7 @@ import torch
 import google.generativeai as genai
 
 # API Keys - Using only Gemini
-GEMINI_API_KEY = "AIzaSyBFEi1wQlY2CzmEexGwbTtMpG--nEO2uCs"
+GEMINI_API_KEY = ""
 
 # Configure Gemini
 genai.configure(api_key=GEMINI_API_KEY)
@@ -481,3 +481,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
