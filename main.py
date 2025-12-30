@@ -8,11 +8,13 @@ from transformers import pipeline
 import torch
 import google.generativeai as genai
 
-# API Keys - Using only Gemini
-GEMINI_API_KEY = ""
-
-# Configure Gemini
-genai.configure(api_key=GEMINI_API_KEY)
+# Configure Gemini from Streamlit secrets
+try:
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    genai.configure(api_key=GEMINI_API_KEY)
+except (KeyError, AttributeError):
+    st.error("Gemini API key not found. Please set it in Streamlit secrets.toml file.")
+    st.stop()
 
 class MedicalChatbot:
     def __init__(self):
@@ -20,6 +22,32 @@ class MedicalChatbot:
         self.users_file = "kb/users.json"
         self.diet_file = "diet.json"
         self.gemini_model = genai.GenerativeModel('gemini-2.0-flash')
+        
+        # PROMPT 1: System Role
+        self.system_prompt = """
+        You are a medical health information assistant.
+        You are NOT a doctor.
+        You must NOT diagnose diseases or prescribe medication.
+        You provide general, educational health information only.
+
+        Rules:
+        - Always include a medical disclaimer
+        - Encourage consulting licensed healthcare professionals
+        - Use cautious, non-definitive language
+        - Treat mental health and emergency symptoms with extra care
+        - Advise immediate medical attention for severe or alarming symptoms
+
+        Tone:
+        Calm, professional, empathetic.
+        """
+        
+        # PROMPT 8: UI Disclaimer (for display)
+        self.ui_disclaimer = """
+        ⚠️ This chatbot provides general health information only.
+        It does not provide medical diagnoses or treatment.
+        Always consult a licensed healthcare professional for medical concerns.
+        """
+        
         self.load_data()
         
     def load_sentiment_analyzer(self):
@@ -67,9 +95,10 @@ class MedicalChatbot:
         if phone in self.users:
             return False, "User already exists with this phone number"
         
+        # PROMPT 9: Fix field naming - store age properly
         self.users[phone] = {
             'Name': user_data['name'],
-            'DOB': user_data['age'],
+            'Age': user_data['age'],  # Changed from 'DOB' to 'Age'
             'Height': user_data['height'],
             'Weight': user_data['weight'],
             'Gender': user_data['gender'],
@@ -143,86 +172,159 @@ class MedicalChatbot:
         else:
             return 'general'
     
-    def get_gemini_nutrition_advice(self, user_data, diet_context, user_query):
-        """Get personalized nutrition advice using Gemini API"""
+    # PROMPT 2: Single Entry Point for all Gemini calls
+    def _call_gemini(self, task_prompt, user_data=None):
+        """Single entry point for all Gemini API calls"""
         try:
-            # Prepare user context
+            # Prepare context with system prompt and task prompt
+            full_prompt = f"{self.system_prompt}\n\n{task_prompt}"
+            
+            response = self.gemini_model.generate_content(full_prompt)
+            return response.text
+        except Exception as e:
+            # Fallback responses based on intent
+            if "nutrition" in task_prompt.lower():
+                return "I apologize, but I'm having trouble accessing nutrition advice right now. Please try again later or consult a nutritionist."
+            elif "symptom" in task_prompt.lower():
+                return "I'm currently unable to analyze symptoms. Please consult a healthcare professional for any medical concerns."
+            else:
+                return "I'm having trouble processing your request. Please try again or consult a healthcare professional for medical advice."
+    
+    def get_nutrition_advice(self, user_data, diet_context, user_query):
+        """Get personalized nutrition advice using Gemini API"""
+        # PROMPT 3: Nutrition Task Prompt
+        task_prompt = f"""
+        Using the user profile and diet details provided:
+        - Identify unhealthy dietary patterns
+        - Suggest healthier alternatives
+        - Recommend balanced meals
+        - Personalize advice based on age, weight, height, gender, and country
+
+        User Profile:
+        - Name: {user_data['Name']}
+        - Age: {user_data['Age']}
+        - Height: {user_data['Height']} cm
+        - Weight: {user_data['Weight']} kg
+        - Gender: {user_data['Gender']}
+        - Country: {user_data['Country']}
+        
+        Current Diet: {diet_context}
+        User Query: {user_query}
+
+        Do not diagnose or prescribe.
+        Include a medical disclaimer.
+        """
+        
+        return self._call_gemini(task_prompt, user_data)
+    
+    def get_symptom_analysis(self, symptoms_text, user_data=None):
+        """Analyze symptoms using Gemini API"""
+        # PROMPT 4: Symptom Analysis Task Prompt
+        user_context = ""
+        if user_data:
             user_context = f"""
             User Profile:
-            - Name: {user_data['Name']}
-            - Age: {user_data['DOB']}
+            - Age: {user_data['Age']}
+            - Gender: {user_data['Gender']}
             - Height: {user_data['Height']} cm
             - Weight: {user_data['Weight']} kg
+            """
+        
+        task_prompt = f"""
+        The user is describing health symptoms.
+        
+        {user_context}
+        Symptoms described: {symptoms_text}
+
+        Provide:
+        1. Possible common causes (not a diagnosis)
+        2. General self-care guidance
+        3. Warning signs that require medical attention
+        4. Important precautions
+
+        Always include a disclaimer stating this is not medical advice.
+        Use empathetic and cautious language.
+        """
+        
+        return self._call_gemini(task_prompt, user_data)
+    
+    def get_mental_health_support(self, user_input, user_data=None):
+        """Get mental health support using Gemini API"""
+        # PROMPT 5: Mental Health Support Prompt
+        user_context = ""
+        if user_data:
+            user_context = f"""
+            User Profile:
+            - Age: {user_data['Age']}
             - Gender: {user_data['Gender']}
-            - Country: {user_data['Country']}
-            
-            Current Diet: {diet_context}
-            User Query: {user_query}
-            
-            Please provide specific, practical nutrition advice. Focus on:
-            1. Addressing the current diet issues
-            2. Providing healthy alternatives
-            3. Creating a balanced meal plan
-            4. Considering the user's profile
             """
-            
-            response = self.gemini_model.generate_content(user_context)
-            return response.text
-        except Exception as e:
-            return f"I apologize, but I'm having trouble accessing nutrition advice right now. Error: {str(e)}"
+        
+        task_prompt = f"""
+        Provide supportive, non-judgmental guidance for mental health concerns.
+        
+        {user_context}
+        User's concern: {user_input}
+
+        Focus on:
+        - Coping strategies
+        - Breathing or grounding techniques
+        - Sleep and routine
+        - When to seek professional help
+
+        Do not provide therapy or diagnosis.
+        Include a mental health safety disclaimer.
+        """
+        
+        return self._call_gemini(task_prompt, user_data)
     
-    def get_gemini_symptom_analysis(self, symptoms_text, user_data=None):
-        """Analyze symptoms using Gemini API"""
-        try:
-            # Prepare context for symptom analysis
-            user_context = ""
-            if user_data:
-                user_context = f"""
-                User Profile:
-                - Age: {user_data['DOB']}
-                - Gender: {user_data['Gender']}
-                - Height: {user_data['Height']} cm
-                - Weight: {user_data['Weight']} kg
-                """
-            
-            symptom_prompt = f"""
-            {user_context}
-            User is describing these symptoms: {symptoms_text}
-            
-            Please provide:
-            1. Possible common causes (but emphasize this is not a diagnosis)
-            2. General self-care recommendations
-            3. When to seek medical attention
-            4. Important precautions
-            
-            IMPORTANT: Always include a disclaimer that this is not medical advice and users should consult healthcare professionals.
-            Be empathetic and practical in your response.
+    def get_fitness_guidance(self, user_input, user_data):
+        """Get fitness guidance using Gemini API"""
+        # PROMPT 6: Fitness Guidance Prompt
+        task_prompt = f"""
+        Provide general fitness guidance based on the user profile.
+        
+        User Profile:
+        - Age: {user_data['Age']}
+        - Gender: {user_data['Gender']}
+        - Height: {user_data['Height']} cm
+        - Weight: {user_data['Weight']} kg
+        
+        Query: {user_input}
+
+        Include:
+        - Safe exercise suggestions
+        - Activity frequency
+        - Precautions based on age and weight
+
+        Do not create medical or rehabilitation plans.
+        Include a disclaimer.
+        """
+        
+        return self._call_gemini(task_prompt, user_data)
+    
+    def get_general_health_info(self, user_input, user_data=None):
+        """Get general health information using Gemini API"""
+        # PROMPT 7: General Health Prompt
+        user_context = ""
+        if user_data:
+            user_context = f"""
+            User Profile (if relevant):
+            - Age: {user_data['Age']}
+            - Gender: {user_data['Gender']}
             """
-            
-            response = self.gemini_model.generate_content(symptom_prompt)
-            return response.text
-        except Exception as e:
-            return self.get_basic_symptom_advice(symptoms_text)
-    
-    def get_basic_symptom_advice(self, symptom_text):
-        """Fallback symptom advice"""
-        symptom_lower = symptom_text.lower()
         
-        advice_map = {
-            'fever': "Rest, stay hydrated, and monitor temperature. Consult a doctor if fever persists above 38°C (100.4°F) for more than 3 days.",
-            'headache': "Rest in a quiet room, stay hydrated, avoid bright screens. Seek medical advice if severe or accompanied by other symptoms.",
-            'cough': "Stay hydrated, use honey in warm water, avoid irritants. See a doctor if accompanied by fever or breathing difficulties.",
-            'stomach': "Eat bland foods, avoid spicy/greasy foods, stay hydrated. Seek medical attention if severe pain or vomiting persists.",
-            'pain': "Rest the affected area, apply cold/warm compress as appropriate. Consult a doctor if pain is severe or worsening.",
-            'nausea': "Sip clear fluids, eat small bland meals, avoid strong odors. Seek help if unable to keep fluids down.",
-            'dizziness': "Sit or lie down immediately, rise slowly from sitting position. Consult doctor if frequent or severe."
-        }
+        task_prompt = f"""
+        Provide general, practical health information related to the user's question.
         
-        for symptom, advice in advice_map.items():
-            if symptom in symptom_lower:
-                return f"I understand you're experiencing {symptom}. {advice} Please consult a healthcare professional for proper diagnosis and treatment."
+        {user_context}
+        User's question: {user_input}
+
+        If the input is a greeting, respond politely.
+        Avoid diagnosis, certainty, or medical prescriptions.
+        Include a disclaimer when health advice is given.
+        """
         
-        return "I understand you're not feeling well. It's important to monitor your symptoms and consult a healthcare professional if they persist or worsen. Rest and stay hydrated in the meantime."
+        return self._call_gemini(task_prompt, user_data)
 
     def generate_response(self, user_input, user_data=None, intent=None):
         """Generate personalized response using Gemini API"""
@@ -239,13 +341,13 @@ class MedicalChatbot:
         else:
             empathetic_opening = "Thank you for sharing. "
         
-        # Intent-based responses using Gemini API
+        # Intent-based responses using single entry point
         if intent == 'nutrition' and user_data:
             # Update diet history
             self.update_diet_history(st.session_state.current_user, user_input)
             
             # Get Gemini advice
-            gemini_response = self.get_gemini_nutrition_advice(user_data, user_input, user_input)
+            gemini_response = self.get_nutrition_advice(user_data, user_input, user_input)
             
             # Add personalized BMI info
             try:
@@ -266,66 +368,23 @@ class MedicalChatbot:
         
         elif intent == 'symptom':
             # Get Gemini symptom analysis
-            gemini_response = self.get_gemini_symptom_analysis(user_input, user_data)
+            gemini_response = self.get_symptom_analysis(user_input, user_data)
             return empathetic_opening + gemini_response
         
         elif intent == 'mental_health':
-            # Use Gemini for mental health advice
-            try:
-                mental_health_prompt = f"""
-                User is seeking mental health advice. They mentioned: {user_input}
-                Provide supportive, practical advice for stress/anxiety management.
-                Focus on: breathing exercises, routine, sleep, and when to seek professional help.
-                Be empathetic and non-judgmental.
-                """
-                response = self.gemini_model.generate_content(mental_health_prompt)
-                return empathetic_opening + response.text
-            except:
-                basic_advice = "Consider practicing relaxation techniques, maintaining a regular routine, and ensuring adequate sleep. If feelings persist, speaking with a mental health professional can be very helpful."
-                return empathetic_opening + basic_advice
+            # Get mental health support
+            gemini_response = self.get_mental_health_support(user_input, user_data)
+            return empathetic_opening + gemini_response
         
         elif intent == 'fitness' and user_data:
-            # Use Gemini for fitness advice
-            try:
-                fitness_prompt = f"""
-                User profile: 
-                - Age: {user_data.get('DOB', 'Not specified')}
-                - Gender: {user_data.get('Gender', 'Not specified')}
-                - Height: {user_data.get('Height', 'Not specified')} cm
-                - Weight: {user_data.get('Weight', 'Not specified')} kg
-                
-                Query: {user_input}
-                
-                Provide personalized fitness advice considering age, weight, and goals.
-                Include practical exercise recommendations and safety precautions.
-                """
-                response = self.gemini_model.generate_content(fitness_prompt)
-                return empathetic_opening + response.text
-            except:
-                try:
-                    height_m = float(user_data['Height']) / 100
-                    weight_kg = float(user_data['Weight'])
-                    bmi = weight_kg / (height_m ** 2)
-                    bmi_advice = f"Your BMI is {bmi:.1f}. "
-                    if bmi < 18.5:
-                        bmi_advice += "Focus on strength training and balanced nutrition."
-                    elif bmi <= 25:
-                        bmi_advice += "Maintain with regular cardio and strength exercises."
-                    else:
-                        bmi_advice += "Combine cardio with strength training and balanced diet."
-                except:
-                    bmi_advice = "Regular exercise and balanced nutrition are key."
-                
-                return empathetic_opening + bmi_advice
+            # Get fitness guidance
+            gemini_response = self.get_fitness_guidance(user_input, user_data)
+            return empathetic_opening + gemini_response
         
         else:
-            # General health advice using Gemini
-            try:
-                general_prompt = f"User asked: {user_input}. Provide helpful, practical health advice. If it's a greeting, respond appropriately."
-                response = self.gemini_model.generate_content(general_prompt)
-                return empathetic_opening + response.text
-            except:
-                return empathetic_opening + "How can I assist you with your health concerns today? You can ask me about nutrition, symptoms, fitness, or general health advice."
+            # General health advice
+            gemini_response = self.get_general_health_info(user_input, user_data)
+            return empathetic_opening + gemini_response
 
 # Streamlit UI
 def main():
@@ -350,6 +409,11 @@ def main():
     
     # Sidebar
     st.sidebar.title("🏥 Medical Chatbot")
+    
+    # PROMPT 8: Display UI Disclaimer in sidebar
+    st.sidebar.markdown("---")
+    with st.sidebar.expander("⚠️ Important Disclaimer", expanded=True):
+        st.markdown(st.session_state.chatbot.ui_disclaimer)
     
     # Login/Register section
     if st.session_state.current_user is None:
@@ -405,10 +469,10 @@ def main():
         st.sidebar.success(f"Logged in as: {st.session_state.current_user}")
         user_data = st.session_state.chatbot.users[st.session_state.current_user]
         
-        # User info display
+        # User info display - Updated field name from DOB to Age
         st.sidebar.subheader("User Information")
         st.sidebar.write(f"*Name:* {user_data['Name']}")
-        st.sidebar.write(f"*Age:* {user_data['DOB']}")
+        st.sidebar.write(f"*Age:* {user_data['Age']}")
         st.sidebar.write(f"*Height:* {user_data['Height']} cm")
         st.sidebar.write(f"*Weight:* {user_data['Weight']} kg")
         st.sidebar.write(f"*Gender:* {user_data['Gender']}")
@@ -434,6 +498,12 @@ def main():
     
     # Main chat area
     st.title("💬 Medical Health Assistant")
+    
+    # PROMPT 8: Display UI disclaimer in main area
+    st.markdown("---")
+    with st.expander("⚠️ Important Medical Disclaimer", expanded=False):
+        st.markdown(st.session_state.chatbot.ui_disclaimer)
+    st.markdown("---")
     
     if st.session_state.current_user is None:
         st.info("Please login or register using the sidebar to start chatting")
@@ -481,4 +551,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
