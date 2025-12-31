@@ -1,89 +1,131 @@
-# CareMate-HealthBot-
-An Interactive Chatbot which give users nutrients plan, diet suggestions, and a symptom check.
+🏥 CareMate – HealthBot
 
-login page:
+CareMate is an interactive **medical health chatbot** built using **Streamlit**, **Google Gemini API**, and **Hugging Face Transformers**.
+It helps users with **nutrition guidance**, **diet suggestions**, **symptom checking**, **fitness advice**, and **basic mental health support**.
 
-⦁	Name
-⦁	age
-⦁	gender
-⦁	country
-⦁	height
-⦁	weight
-⦁	mobile number
+⚠️ *This chatbot provides general health information only and is not a substitute for professional medical advice.*
 
-1. User Input:
-- User types or speaks a question or concern.---->Login
+---
 
-2. Intent Detection:
-- Chatbot identifies if the request is about nutrition, stress, glucose monitoring, etc.---->yesterdays class as ref (focus 80% on the chosen topic and 20% on other chat)
+✨ Features
 
-3. Personalization:
-- Chatbot tailors responses based on user data (e.g., health records, mood, device data).---->saves the user medical files into KB
+ 🔐 User Login & Registration
 
-4. Empathetic Interaction:
-- Uses sentiment analysis to adapt tone and support level. -->use Hugging face transformers (distilbert-base-uncased-finetuned-sst-2-english) as example.
+Users can register and log in by providing:
 
-(Store in the KB in two ways 1st way is /register(creates a new file for the user) 2nd way is /login(access the user file for future references))
+* Name
+* Age
+* Gender
+* Country
+* Height
+* Weight
+* Mobile Number
 
+Each user has a personalized medical profile.
 
+---
 
+ 🧠 Intent Detection
 
-STRUCTURE OF THE MEDICAL FILES IN THE KB 
-Name: 
-DOB: 
-Height: 
-Weight: 
-Gender: 
-Country: 
+The chatbot identifies the user’s intent and classifies queries into:
 
+* Nutrition / Diet
+* Symptoms
+* Mental Health
+* Fitness
+* General Health
 
-Medical info:
+Responses focus mainly on the detected intent.
 
+---
 
-Gemini API for nutrition, diet, symptom checking:
+ ❤️ Sentiment Analysis
 
-You don’t need to map the user KB to Gemini answers manually. Gemini (or similar LLM APIs) can read the content of a user’s KB file dynamically and generate responses based on it—if you pass the KB content as part of the prompt.
+Uses **Hugging Face Transformers**
+Model: `distilbert-base-uncased-finetuned-sst-2-english`
 
-3️⃣ Call Gemini API
+* Detects positive or negative sentiment
+* Adjusts the response tone to be empathetic and supportive
 
-The API will process the prompt and generate an answer based on the KB content.
+---
 
-No manual mapping is required—just make sure the KB is in readable text form.
+ 📂 Medical Knowledge Base (KB)
 
-✅ Notes
+User information and medical notes are stored locally.
 
-If the KB is large, you might need to chunk it and feed only relevant parts to avoid hitting token limits.
+**Medical record includes:**
 
-You can implement semantic search / embeddings to pick the most relevant KB sections for each query before sending to Gemini.
+* Name
+* Age
+* Height
+* Weight
+* Gender
+* Country
+* Medical Notes
+* Diet History
 
-Always include disclaimers if medical advice is being generated.
+Users can enable **Medical Report Mode** to save messages directly into their medical record.
 
-You only need to read and pass the KB programmatically, Gemini will handle mapping and answering.
+---
 
+ 🥗 Nutrition & Diet Guidance
 
+* Analyzes diet-related input
+* Identifies unhealthy food patterns
+* Suggests healthier alternatives
+* Provides personalized advice based on user details
+* Displays BMI for informational purposes only
 
+---
 
-HuggingFace Transformers:
+ 🤒 Symptom Checker
 
+* Provides possible common causes (non-diagnostic)
+* Suggests general self-care practices
+* Advises when to consult a healthcare professional
+* Does not provide diagnosis or prescriptions
 
-It is a sentiment analysis model.
+---
 
-You give it a piece of text (a review, comment, tweet, message, etc.).
+ 🧠 Mental Health Support
 
-It returns whether the text is Positive or Negative, along with a confidence score.
+* Handles stress and mood-related queries
+* Offers general coping strategies
+* Encourages professional help when needed
+* Uses supportive and non-judgmental language
 
-Example Uses:
+---
 
-Customer feedback → Classify reviews as positive/negative.
+ 🤖 Gemini API Integration
 
-Social media monitoring → Detect negative tweets about a brand.
+CareMate uses **Google Gemini** to generate responses for:
 
-Chatbots → Understand if a user is happy or upset.
+* Nutrition advice
+* Symptom explanations
+* Fitness guidance
+* Mental health support
 
-Market research → Analyze sentiment trends in product discussions.
+User medical data is passed as readable context to the model to generate personalized responses.
 
-Content filtering → Flag strongly negative or toxic messages.
+---
 
-output = query({
-    "inputs": "I like you. I love you",
-})
+🛠️ Technologies Used
+
+* Python
+* Streamlit
+* Google Gemini API
+* Hugging Face Transformers
+* JSON-based Knowledge Base
+
+---
+
+⚠️ Disclaimer
+
+CareMate provides **general health information only**.
+It does **not diagnose diseases**, **does not prescribe medication**, and **does not replace professional medical consultation**.
+
+---
+
+🎓 Purpose
+
+This project is developed for **educational and academic purposes.
