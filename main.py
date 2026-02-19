@@ -6,13 +6,14 @@ from datetime import datetime
 import re
 from transformers import pipeline
 import torch
-from groq import Groq
+import google.generativeai as genai
 
-# Configure Groq from Streamlit secrets
+# Configure Gemini from Streamlit secrets
 try:
-    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    genai.configure(api_key=GEMINI_API_KEY)
 except (KeyError, AttributeError):
-    st.error("Groq API key not found. Please set it in Streamlit secrets.toml file.")
+    st.error("Gemini API key not found. Please set it in Streamlit secrets.toml file.")
     st.stop()
 
 class MedicalChatbot:
@@ -20,10 +21,7 @@ class MedicalChatbot:
         self.sentiment_analyzer = self.load_sentiment_analyzer()
         self.users_file = "kb/users.json"
         self.diet_file = "diet.json"
-        
-        # Initialize Groq Client
-        self.client = Groq(api_key=GROQ_API_KEY)
-        self.model_id = "llama-3.3-70b-versatile"
+        self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
         
         # PROMPT 1: System Role
         self.system_prompt = """
@@ -41,10 +39,6 @@ class MedicalChatbot:
 
         Tone:
         Calm, professional, empathetic.
-        
-        Output Format:
-        When suggesting remedies, treatments, or instructions, ALWAYS use a clear, numbered step-by-step format.
-        Provide detailed explanations for each step.
         """
         
         # PROMPT 8: UI Disclaimer (for display)
@@ -178,26 +172,27 @@ class MedicalChatbot:
         else:
             return 'general'
     
+    # PROMPT 2: Single Entry Point for all Gemini calls
     def _call_gemini(self, task_prompt, user_data=None):
         try:
             full_prompt = f"{self.system_prompt}\n\n{task_prompt}"
     
-            response = self.client.chat.completions.create(
-                model=self.model_id,
-                messages=[
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": task_prompt}
-                ]
-            )
+            response = self.gemini_model.generate_content(full_prompt)
     
-            if response.choices and response.choices[0].message.content:
-                return response.choices[0].message.content
-                
+            # Modern safe extraction
+            if hasattr(response, "text") and response.text:
+                return response.text
+    
+            if hasattr(response, "candidates") and response.candidates:
+                parts = response.candidates[0].content.parts
+                if parts and hasattr(parts[0], "text"):
+                    return parts[0].text
+    
             return "The AI returned an empty response. Please try again."
     
         except Exception as e:
             import traceback
-            return f"Groq Error:\n{str(e)}\n\n{traceback.format_exc()}"
+            return f"Gemini Error:\n{str(e)}\n\n{traceback.format_exc()}"
     
     def get_nutrition_advice(self, user_data, diet_context, user_query):
         """Get personalized nutrition advice using Gemini API"""
@@ -216,7 +211,6 @@ class MedicalChatbot:
         - Weight: {user_data['Weight']} kg
         - Gender: {user_data['Gender']}
         - Country: {user_data['Country']}
-        - Medical History: {user_data.get('MedicalInfo', 'None')}
         
         Current Diet: {diet_context}
         User Query: {user_query}
@@ -238,7 +232,6 @@ class MedicalChatbot:
             - Gender: {user_data['Gender']}
             - Height: {user_data['Height']} cm
             - Weight: {user_data['Weight']} kg
-            - Medical History: {user_data.get('MedicalInfo', 'None')}
             """
         
         task_prompt = f"""
@@ -249,13 +242,12 @@ class MedicalChatbot:
 
         Provide:
         1. Possible common causes (not a diagnosis)
-        2. General self-care guidance (step-by-step)
+        2. General self-care guidance
         3. Warning signs that require medical attention
         4. Important precautions
 
         Always include a disclaimer stating this is not medical advice.
         Use empathetic and cautious language.
-        If suggesting remedies, please be detailed and use a numbered list format.
         """
         
         return self._call_gemini(task_prompt, user_data)
@@ -269,7 +261,6 @@ class MedicalChatbot:
             User Profile:
             - Age: {user_data['Age']}
             - Gender: {user_data['Gender']}
-            - Medical History: {user_data.get('MedicalInfo', 'None')}
             """
         
         task_prompt = f"""
@@ -301,7 +292,6 @@ class MedicalChatbot:
         - Gender: {user_data['Gender']}
         - Height: {user_data['Height']} cm
         - Weight: {user_data['Weight']} kg
-        - Medical History: {user_data.get('MedicalInfo', 'None')}
         
         Query: {user_input}
 
@@ -325,7 +315,6 @@ class MedicalChatbot:
             User Profile (if relevant):
             - Age: {user_data['Age']}
             - Gender: {user_data['Gender']}
-            - Medical History: {user_data.get('MedicalInfo', 'None')}
             """
         
         task_prompt = f"""
@@ -337,7 +326,6 @@ class MedicalChatbot:
         If the input is a greeting, respond politely.
         Avoid diagnosis, certainty, or medical prescriptions.
         Include a disclaimer when health advice is given.
-        If suggesting remedies or actions, please provide them in a detailed, step-by-step numbered list.
         """
         
         return self._call_gemini(task_prompt, user_data)
@@ -529,20 +517,19 @@ def main():
             st.warning("📝 Medical Report Mode Active - All messages are being saved to your medical record")
         
         # Display chat history
-        for message in st.session_state.chat_history:
-            if message['role'] == 'user':
-                st.chat_message("user", avatar="👤").write(message['content'])
-            else:
-                st.chat_message("assistant", avatar="🏥").write(message['content'])
+        chat_container = st.container()
+        with chat_container:
+            for i, message in enumerate(st.session_state.chat_history):
+                if message['role'] == 'user':
+                    st.chat_message("user", avatar="👤").write(message['content'])
+                else:
+                    st.chat_message("assistant", avatar="🏥").write(message['content'])
         
         # Chat input
         user_input = st.chat_input("Type your health question or concern...")
         
         if user_input:
-            # Display user message immediately
-            st.chat_message("user", avatar="👤").write(user_input)
-            
-            # Add user message to chat history
+            # Add user message to chat
             st.session_state.chat_history.append({'role': 'user', 'content': user_input})
             
             # Handle medical report mode
@@ -556,19 +543,15 @@ def main():
                     response = "Medical report mode started. All your messages will be saved to your medical file."
                 else:
                     # Generate AI response using Gemini API
-                    with st.chat_message("assistant", avatar="🏥"):
-                        with st.spinner("Thinking..."):
-                            user_data = st.session_state.chatbot.users[st.session_state.current_user]
-                            intent = st.session_state.chatbot.detect_intent(user_input)
-                            response = st.session_state.chatbot.generate_response(user_input, user_data, intent)
-                            st.write(response)
+                    user_data = st.session_state.chatbot.users[st.session_state.current_user]
+                    intent = st.session_state.chatbot.detect_intent(user_input)
+                    response = st.session_state.chatbot.generate_response(user_input, user_data, intent)
             
-            # If we didn't use the spinner block (e.g. for commands), display response
-            if 'Medical report mode' in response or 'Added to your medical record' in response:
-                 st.chat_message("assistant", avatar="🏥").write(response)
-            
-            # Add assistant response to chat history
+            # Add assistant response to chat
             st.session_state.chat_history.append({'role': 'assistant', 'content': response})
+            
+            # Rerun to update display
+            st.rerun()
 
 if __name__ == "__main__":
     main()

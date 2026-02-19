@@ -6,33 +6,8 @@
     "Weight": "80",
     "Gender": "Male",
     "Country": "India",
-    "MedicalInfo": "2025-12-30 13:22: I am Suffering from cough and cold\n2025-12-30 13:22: I have fever\n2026-02-19 13:43: I used to have chikenpox when i was 30 years old\n2026-02-19 13:43: I am lactose intolerant\n2026-02-19 13:48: I am allergic to fish",
+    "MedicalInfo": "2025-12-30 13:22: I am Suffering from cough and cold\n2025-12-30 13:22: I have fever",
     "RegistrationDate": "2025-12-30T13:18:15.165981",
-    "DietHistory": [
-      {
-        "timestamp": "2026-02-19 13:44",
-        "diet_info": "Suggest some diet plans. I plan to lose atleast 5kgs",
-        "analysis": {
-          "unhealthy_foods": [],
-          "recommendations": []
-        }
-      },
-      {
-        "timestamp": "2026-02-19 13:49",
-        "diet_info": "I have difficulty breathing.\nit feels like my throat swelled up.\ni just had a japanese sea food lunch",
-        "analysis": {
-          "unhealthy_foods": [],
-          "recommendations": []
-        }
-      },
-      {
-        "timestamp": "2026-02-19 13:50",
-        "diet_info": "Tell me what food i am allergic to based on my details",
-        "analysis": {
-          "unhealthy_foods": [],
-          "recommendations": []
-        }
-      }
-    ]
+    "DietHistory": []
   }
 }
