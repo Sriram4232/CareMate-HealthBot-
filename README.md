@@ -1,131 +1,95 @@
-🏥 CareMate – HealthBot
+# 🏥 CareMate HealthBot
 
-CareMate is an interactive **medical health chatbot** built using **Streamlit**, **Google Gemini API**, and **Hugging Face Transformers**.
-It helps users with **nutrition guidance**, **diet suggestions**, **symptom checking**, **fitness advice**, and **basic mental health support**.
+**A personalized, AI-powered medical health assistant helping you make informed health decisions.**
 
-⚠️ *This chatbot provides general health information only and is not a substitute for professional medical advice.*
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://caremate-healthbot.streamlit.app/)
 
----
-
-✨ Features
-
- 🔐 User Login & Registration
-
-Users can register and log in by providing:
-
-* Name
-* Age
-* Gender
-* Country
-* Height
-* Weight
-* Mobile Number
-
-Each user has a personalized medical profile.
+## 🔗 Live Demo
+**[Try the Live App Here](https://caremate-healthbot.streamlit.app/)**
 
 ---
 
- 🧠 Intent Detection
+## 📖 Project Overview
+**CareMate HealthBot** is an intelligent health assistant designed to provide general medical guidance, symptom analysis, nutrition advice, and mental health support. Built with **Streamlit** and powered by the **Groq API** (Llama 3.3 70B), it offers a conversational interface for users to discuss their health concerns in a safe, non-judgmental environment.
 
-The chatbot identifies the user’s intent and classifies queries into:
+The bot maintains user context (age, gender, medical history) to provide personalized responses and avoids generic answers. It explicitly formats remedies in clear, step-by-step lists and always includes medical disclaimers.
 
-* Nutrition / Diet
-* Symptoms
-* Mental Health
-* Fitness
-* General Health
+## 🏗️ Structural Architecture
 
-Responses focus mainly on the detected intent.
+The application follows a modular architecture designed for simplicity and performance:
 
----
+```mermaid
+graph TD
+    User[User] -->|Interacts| UI[Streamlit Interface]
+    UI -->|Input| Controller[main.py Logic]
+    
+    subgraph Data Layer
+        UsersDB[(kb/users.json)]
+        DietDB[(diet.json)]
+    end
+    
+    subgraph AI Engine
+        NLP[HuggingFace Sentiment Analysis]
+        Groq[Groq API (Llama 3.3)]
+    end
+    
+    Controller -->|Read/Write| UsersDB
+    Controller -->|Read| DietDB
+    Controller -->|Analyze| NLP
+    Controller -->|Generate Response| Groq
+    
+    Groq -->|Context-Aware Response| Controller
+    Controller -->|Formatted Output| UI
+```
 
- ❤️ Sentiment Analysis
+### Components
+1.  **Streamlit Interface (`main.py`)**: Handles the frontend UI, session state management (chat history, user login), and input processing.
+2.  **Logic Controller**:
+    *   **Intent Detection**: Routes user queries to specific handlers (Symptom, Nutrition, Mental Health, Fitness).
+    *   **Context Injection**: Injects user profile data (Age, Medical History) into AI prompts for personalized advice.
+    *   **Sentiment Analysis**: Uses `distilbert` to detect user emotion and adjust response tone.
+3.  **AI Engine**:
+    *   **Groq API**: Generates human-like, medical-context-aware responses using the Llama 3.3 70B model.
+4.  **Data Storage**:
+    *   `kb/users.json`: Stores user profiles, medical history logs, and diet logs.
+    *   `diet.json`: Contains database of unhealthy foods and healthy alternatives.
 
-Uses **Hugging Face Transformers**
-Model: `distilbert-base-uncased-finetuned-sst-2-english`
+## ✨ Key Features
+-   **Symptom Analysis**: Provides potential causes and self-care steps for reported symptoms.
+-   **Diet & Nutrition**: Analyzes food intake, suggests healthy alternatives, and calculates BMI.
+-   **Mental Health Support**: Offers coping strategies and grounding techniques with an empathetic tone.
+-   **Medical Report Mode**: Allows users to log specific medical details into their persistent history.
+-   **Context-Aware**: Remembers user details (e.g., "Lactose Intolerant") to avoid conflicting advice.
 
-* Detects positive or negative sentiment
-* Adjusts the response tone to be empathetic and supportive
+## 🚀 Getting Started Locally
 
----
+### Prerequisites
+-   Python 3.8+
+-   Groq API Key
 
- 📂 Medical Knowledge Base (KB)
+### Installation
 
-User information and medical notes are stored locally.
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/Sriram4232/CareMate-HealthBot-.git
+    cd CareMate-HealthBot-
+    ```
 
-**Medical record includes:**
+2.  **Install dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-* Name
-* Age
-* Height
-* Weight
-* Gender
-* Country
-* Medical Notes
-* Diet History
+3.  **Set up secrets**
+    Create a `.streamlit/secrets.toml` file:
+    ```toml
+    GROQ_API_KEY = "your_groq_api_key_here"
+    ```
 
-Users can enable **Medical Report Mode** to save messages directly into their medical record.
+4.  **Run the app**
+    ```bash
+    streamlit run main.py
+    ```
 
----
-
- 🥗 Nutrition & Diet Guidance
-
-* Analyzes diet-related input
-* Identifies unhealthy food patterns
-* Suggests healthier alternatives
-* Provides personalized advice based on user details
-* Displays BMI for informational purposes only
-
----
-
- 🤒 Symptom Checker
-
-* Provides possible common causes (non-diagnostic)
-* Suggests general self-care practices
-* Advises when to consult a healthcare professional
-* Does not provide diagnosis or prescriptions
-
----
-
- 🧠 Mental Health Support
-
-* Handles stress and mood-related queries
-* Offers general coping strategies
-* Encourages professional help when needed
-* Uses supportive and non-judgmental language
-
----
-
- 🤖 Gemini API Integration
-
-CareMate uses **Google Gemini** to generate responses for:
-
-* Nutrition advice
-* Symptom explanations
-* Fitness guidance
-* Mental health support
-
-User medical data is passed as readable context to the model to generate personalized responses.
-
----
-
-🛠️ Technologies Used
-
-* Python
-* Streamlit
-* Google Gemini API
-* Hugging Face Transformers
-* JSON-based Knowledge Base
-
----
-
-⚠️ Disclaimer
-
-CareMate provides **general health information only**.
-It does **not diagnose diseases**, **does not prescribe medication**, and **does not replace professional medical consultation**.
-
----
-
-🎓 Purpose
-
-This project is developed for **educational and academic purposes.
+## ⚠️ Disclaimer
+*This application is for educational purposes only and does not substitute professional medical advice. Always consult a licensed healthcare provider for medical concerns.*
