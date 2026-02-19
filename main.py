@@ -21,7 +21,7 @@ class MedicalChatbot:
         self.sentiment_analyzer = self.load_sentiment_analyzer()
         self.users_file = "kb/users.json"
         self.diet_file = "diet.json"
-        self.gemini_model = genai.GenerativeModel('gemini-2.0-flash')
+        self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
         
         # PROMPT 1: System Role
         self.system_prompt = """
@@ -551,3 +551,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
