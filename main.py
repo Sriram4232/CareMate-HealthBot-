@@ -174,21 +174,25 @@ class MedicalChatbot:
     
     # PROMPT 2: Single Entry Point for all Gemini calls
     def _call_gemini(self, task_prompt, user_data=None):
-        """Single entry point for all Gemini API calls"""
         try:
-            # Prepare context with system prompt and task prompt
             full_prompt = f"{self.system_prompt}\n\n{task_prompt}"
-            
+    
             response = self.gemini_model.generate_content(full_prompt)
-            return response.text
+    
+            # Modern safe extraction
+            if hasattr(response, "text") and response.text:
+                return response.text
+    
+            if hasattr(response, "candidates") and response.candidates:
+                parts = response.candidates[0].content.parts
+                if parts and hasattr(parts[0], "text"):
+                    return parts[0].text
+    
+            return "The AI returned an empty response. Please try again."
+    
         except Exception as e:
-            # Fallback responses based on intent
-            if "nutrition" in task_prompt.lower():
-                return "I apologize, but I'm having trouble accessing nutrition advice right now. Please try again later or consult a nutritionist."
-            elif "symptom" in task_prompt.lower():
-                return "I'm currently unable to analyze symptoms. Please consult a healthcare professional for any medical concerns."
-            else:
-                return "I'm having trouble processing your request. Please try again or consult a healthcare professional for medical advice."
+            import traceback
+            return f"Gemini Error:\n{str(e)}\n\n{traceback.format_exc()}"
     
     def get_nutrition_advice(self, user_data, diet_context, user_query):
         """Get personalized nutrition advice using Gemini API"""
@@ -551,4 +555,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
