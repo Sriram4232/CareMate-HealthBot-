@@ -30,7 +30,7 @@ graph TD
     
     subgraph AI Engine
         NLP[HuggingFace Sentiment Analysis]
-        Groq[Groq API (Llama 3.3)]
+        Groq["Groq API (Llama 3.3)"]
     end
     
     Controller -->|Read/Write| UsersDB
