@@ -91,5 +91,5 @@ graph TD
     streamlit run main.py
     ```
 
-## ⚠️ Disclaimer
+## ⚠️ Disclaimer:
 *This application is for educational purposes only and does not substitute professional medical advice. Always consult a licensed healthcare provider for medical concerns.*
